@@ -9,7 +9,9 @@ import {
   Hash,
   Fuel,
   CheckCircle2,
-  Timer
+  Timer,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,24 +19,37 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const MOCK_TXS = [
-  { hash: '0x7a2...f4e', from: '0x123...abc', to: '0xdef...456', value: '1.24 ETH', gas: '0.00042 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '2s ago' },
-  { hash: '0x3b1...d2a', from: '0x789...def', to: '0xabc...123', value: '0.05 ETH', gas: '0.00021 ETH', type: 'TRANSFER', status: 'confirmed', time: '15s ago' },
-  { hash: '0x9c4...e8b', from: '0x456...789', to: '0x123...456', value: '12.50 ETH', gas: '0.00125 ETH', type: 'CONTRACT_CALL', status: 'pending', time: 'Just now' },
-  { hash: '0x1d5...a3c', from: '0xabc...def', to: '0x789...012', value: '0.00 ETH', gas: '0.00038 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '1m ago' },
-  { hash: '0x5e6...b4d', from: '0x012...345', to: '0x678...901', value: '4.20 ETH', gas: '0.00021 ETH', type: 'TRANSFER', status: 'confirmed', time: '2m ago' },
-  { hash: '0x2f7...c5e', from: '0x345...678', to: '0x901...234', value: '0.15 ETH', gas: '0.00045 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '5m ago' },
-];
+const MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
+  hash: `0x${Math.random().toString(16).slice(2, 8)}...${Math.random().toString(16).slice(2, 5)}`,
+  from: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
+  to: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
+  value: `${(Math.random() * 5).toFixed(2)} ETH`,
+  gas: `${(Math.random() * 0.001).toFixed(5)} ETH`,
+  type: ['ZK_PROOF', 'TRANSFER', 'CONTRACT_CALL'][Math.floor(Math.random() * 3)],
+  status: Math.random() > 0.2 ? 'confirmed' : 'pending',
+  time: `${i + 1}m ago`
+}));
+
+const PAGE_SIZE = 10;
 
 export const TransactionExplorer: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredTxs = MOCK_TXS.filter(tx => {
     const matchesStatus = statusFilter ? tx.status === statusFilter : true;
     const matchesType = typeFilter ? tx.type === typeFilter : true;
     return matchesStatus && matchesType;
   });
+
+  const totalPages = Math.ceil(filteredTxs.length / PAGE_SIZE);
+  const paginatedTxs = filteredTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, typeFilter]);
 
   return (
     <div className="space-y-4">
@@ -127,15 +142,20 @@ export const TransactionExplorer: React.FC = () => {
 
       <Card className="border-border bg-card/50">
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-            Recent Transactions ({filteredTxs.length})
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Recent Transactions ({filteredTxs.length})
+            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Page {currentPage} of {totalPages || 1}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[500px]">
             <div className="divide-y divide-border/50">
-              {filteredTxs.map((tx, i) => (
+              {paginatedTxs.map((tx, i) => (
                 <div key={i} className="p-6 hover:bg-white/5 transition-colors cursor-pointer group">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
@@ -157,9 +177,6 @@ export const TransactionExplorer: React.FC = () => {
                         </div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{tx.time}</p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      {/* Status moved next to hash */}
                     </div>
                   </div>
                   
@@ -196,6 +213,45 @@ export const TransactionExplorer: React.FC = () => {
               ))}
             </div>
           </ScrollArea>
+          
+          <div className="p-4 border-t border-border/50 flex items-center justify-between bg-black/10">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Showing {(currentPage - 1) * PAGE_SIZE + 1} to {Math.min(currentPage * PAGE_SIZE, filteredTxs.length)} of {filteredTxs.length}
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+                className="h-8 w-8 p-0 rounded-lg border-border"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <Button
+                    key={i}
+                    variant={currentPage === i + 1 ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setCurrentPage(i + 1)}
+                    className="h-8 w-8 p-0 rounded-lg text-[10px] font-bold"
+                  >
+                    {i + 1}
+                  </Button>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                className="h-8 w-8 p-0 rounded-lg border-border"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
