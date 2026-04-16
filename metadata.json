@@ -1,0 +1,6 @@
+{
+  "name": "BaseZK SDK Explorer",
+  "description": "A high-performance developer toolkit for Zero-Knowledge transactions and node orchestration on the Base network.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
