@@ -146,17 +146,20 @@ export const TransactionExplorer: React.FC = () => {
                         {tx.type === 'ZK_PROOF' ? <Hash className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                       </div>
                       <div>
-                        <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                          <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
+                            "uppercase text-[8px] tracking-widest px-2 py-0 h-4 min-h-0",
+                            tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse"
+                          )}>
+                            {tx.status}
+                          </Badge>
+                        </div>
                         <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{tx.time}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
-                        "uppercase text-[10px] tracking-widest px-3 py-1",
-                        tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "animate-pulse"
-                      )}>
-                        {tx.status}
-                      </Badge>
+                      {/* Status moved next to hash */}
                     </div>
                   </div>
                   
