@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -7,7 +7,9 @@ import {
   ExternalLink,
   Clock,
   Hash,
-  Fuel
+  Fuel,
+  CheckCircle2,
+  Timer
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,15 @@ const MOCK_TXS = [
 ];
 
 export const TransactionExplorer: React.FC = () => {
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+
+  const filteredTxs = MOCK_TXS.filter(tx => {
+    const matchesStatus = statusFilter ? tx.status === statusFilter : true;
+    const matchesType = typeFilter ? tx.type === typeFilter : true;
+    return matchesStatus && matchesType;
+  });
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -44,17 +55,87 @@ export const TransactionExplorer: React.FC = () => {
         </Card>
       </div>
 
+      <div className="flex flex-wrap gap-4 items-center justify-between bg-card/30 p-4 rounded-xl border border-border/50">
+        <div className="flex flex-wrap gap-6">
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Status</p>
+            <div className="flex gap-2">
+              <Button 
+                variant={statusFilter === null ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setStatusFilter(null)}
+                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+              >
+                All
+              </Button>
+              <Button 
+                variant={statusFilter === 'confirmed' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setStatusFilter('confirmed')}
+                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+              >
+                <CheckCircle2 className="w-3 h-3 mr-2" /> Confirmed
+              </Button>
+              <Button 
+                variant={statusFilter === 'pending' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setStatusFilter('pending')}
+                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+              >
+                <Timer className="w-3 h-3 mr-2" /> Pending
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Type</p>
+            <div className="flex gap-2">
+              <Button 
+                variant={typeFilter === null ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setTypeFilter(null)}
+                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+              >
+                All
+              </Button>
+              {['ZK_PROOF', 'TRANSFER', 'CONTRACT_CALL'].map(type => (
+                <Button 
+                  key={type}
+                  variant={typeFilter === type ? 'default' : 'outline'} 
+                  size="sm" 
+                  onClick={() => setTypeFilter(type)}
+                  className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+                >
+                  {type.replace('_', ' ')}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {(statusFilter || typeFilter) && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => { setStatusFilter(null); setTypeFilter(null); }}
+            className="h-8 text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
+          >
+            Clear Filters
+          </Button>
+        )}
+      </div>
+
       <Card className="border-border bg-card/50">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
             <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-            Recent Transactions
+            Recent Transactions ({filteredTxs.length})
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[500px]">
             <div className="divide-y divide-border/50">
-              {MOCK_TXS.map((tx, i) => (
+              {filteredTxs.map((tx, i) => (
                 <div key={i} className="p-6 hover:bg-white/5 transition-colors cursor-pointer group">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
