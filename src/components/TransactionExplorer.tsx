@@ -25,47 +25,48 @@ const MOCK_TXS = [
 
 export const TransactionExplorer: React.FC = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            className="pl-10 bg-card/30 border-none backdrop-blur-sm focus-visible:ring-primary" 
+            className="pl-12 bg-card/50 border-border h-12 rounded-xl focus-visible:ring-primary" 
             placeholder="Search by Transaction Hash / Address / Block..." 
           />
         </div>
-        <Button variant="outline" className="bg-card/30 border-none backdrop-blur-sm">
+        <Button variant="outline" className="bg-card/50 border-border h-12 px-6 rounded-xl text-[10px] uppercase tracking-widest font-bold">
           <Filter className="w-4 h-4 mr-2" /> Filters
         </Button>
       </div>
 
-      <Card className="border-none bg-card/30 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
+      <Card className="border-border bg-card/50">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
             Recent Transactions
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="h-[600px]">
-            <div className="divide-y divide-border">
+          <ScrollArea className="h-[500px]">
+            <div className="divide-y divide-border/50">
               {MOCK_TXS.map((tx, i) => (
-                <div key={i} className="p-4 hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+                <div key={i} className="p-6 hover:bg-white/5 transition-colors cursor-pointer group">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-4">
                       <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
-                        tx.type === 'ZK_PROOF' ? "bg-primary/20 text-primary" : "bg-blue-500/20 text-blue-500"
+                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110",
+                        tx.type === 'ZK_PROOF' ? "bg-primary/10 text-primary border border-primary/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                       )}>
                         {tx.type === 'ZK_PROOF' ? <Hash className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                       </div>
                       <div>
-                        <p className="font-mono text-sm font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
-                        <p className="text-xs text-muted-foreground">{tx.time}</p>
+                        <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{tx.time}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
+                        "uppercase text-[10px] tracking-widest px-3 py-1",
                         tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "animate-pulse"
                       )}>
                         {tx.status}
@@ -73,27 +74,27 @@ export const TransactionExplorer: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">From</p>
-                      <p className="text-xs font-mono">{tx.from}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">From</p>
+                      <p className="text-xs font-mono text-foreground/80">{tx.from}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">To</p>
-                      <p className="text-xs font-mono">{tx.to}</p>
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">To</p>
+                      <p className="text-xs font-mono text-foreground/80">{tx.to}</p>
                     </div>
-                    <div className="space-y-1">
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Value</p>
-                      <p className="text-sm font-bold text-primary">{tx.value}</p>
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value</p>
+                      <p className="text-lg font-mono font-bold text-primary">{tx.value}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-tighter">
+                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/30">
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-widest border-primary/20 text-primary/70">
                       {tx.type}
                     </Badge>
-                    <Button variant="ghost" size="sm" className="h-8 text-xs text-muted-foreground hover:text-primary">
-                      View on BaseScan <ExternalLink className="w-3 h-3 ml-1" />
+                    <Button variant="ghost" size="sm" className="h-8 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5">
+                      View on BaseScan <ExternalLink className="w-3 h-3 ml-2" />
                     </Button>
                   </div>
                 </div>

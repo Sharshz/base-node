@@ -45,7 +45,7 @@ export const NodeManager: React.FC = () => {
   }, [status, stats.blockHeight, stats.peers]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="CPU Usage" value={`${stats.cpu.toFixed(1)}%`} icon={Cpu} progress={stats.cpu} />
         <StatCard title="Memory" value={`${stats.ram.toFixed(1)}%`} icon={Server} progress={stats.ram} />
@@ -53,69 +53,81 @@ export const NodeManager: React.FC = () => {
         <StatCard title="Peers" value={stats.peers.toString()} icon={Network} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-none bg-card/30 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Node Control</CardTitle>
-              <CardDescription>Manage your Base L2 node instance</CardDescription>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Card className="lg:col-span-2 border-border bg-card/50">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Node Control
             </div>
             <div className="flex gap-2">
               {status === 'running' ? (
-                <Button variant="destructive" size="sm" onClick={() => setStatus('stopped')}>
-                  <Square className="w-4 h-4 mr-2" /> Stop Node
+                <Button variant="destructive" size="sm" onClick={() => setStatus('stopped')} className="h-8 text-[10px] uppercase tracking-widest">
+                  <Square className="w-3 h-3 mr-2" /> Stop Node
                 </Button>
               ) : (
-                <Button variant="default" size="sm" onClick={() => setStatus('running')} className="bg-green-600 hover:bg-green-700">
-                  <Play className="w-4 h-4 mr-2" /> Start Node
+                <Button variant="default" size="sm" onClick={() => setStatus('running')} className="h-8 text-[10px] uppercase tracking-widest bg-green-600 hover:bg-green-700">
+                  <Play className="w-3 h-3 mr-2" /> Start Node
                 </Button>
               )}
-              <Button variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" /> Restart
-              </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl border border-border">
+              <div className="flex items-center justify-between p-6 bg-black/20 rounded-xl border border-border">
                 <div className="flex items-center gap-4">
                   <div className={cn(
-                    "w-3 h-3 rounded-full animate-pulse",
+                    "w-2 h-2 rounded-full animate-pulse",
                     status === 'running' ? "bg-green-500" : status === 'syncing' ? "bg-yellow-500" : "bg-red-500"
                   )} />
                   <div>
-                    <p className="text-sm font-medium capitalize">{status}</p>
-                    <p className="text-xs text-muted-foreground">Base Mainnet (Optimism Stack)</p>
+                    <p className="text-xs font-bold uppercase tracking-widest capitalize">{status}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">Base Mainnet (Optimism Stack)</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-mono font-bold">{stats.blockHeight.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">Current Block</p>
+                  <p className="text-xl font-mono font-bold text-primary">{stats.blockHeight.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Current Block</p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs uppercase tracking-wider text-muted-foreground">
+              <div className="space-y-4">
+                <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
                   <span>Sync Progress</span>
-                  <span>99.9%</span>
+                  <span className="text-primary">99.9%</span>
                 </div>
-                <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
                   <div className="h-full bg-primary w-[99.9%] transition-all duration-500" />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                {[
+                  { label: "ZKey Hardware Acceleration", value: "ENABLED (CUDA)" },
+                  { label: "Base L2 Settlement", value: "OPTIMISTIC-ZK-HYBRID" },
+                  { label: "Data Availability", value: "ETHEREUM-BLOBS" },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between py-3 border-b border-border/50 last:border-none text-xs">
+                    <span className="text-muted-foreground uppercase tracking-widest text-[10px]">{item.label}</span>
+                    <span className="text-primary font-mono font-bold">{item.value}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-none bg-card/30 backdrop-blur-sm flex flex-col">
-          <CardHeader className="flex flex-row items-center gap-2">
-            <TerminalIcon className="w-4 h-4 text-primary" />
-            <CardTitle className="text-sm uppercase tracking-widest font-bold">Node Logs</CardTitle>
+        <Card className="border-border bg-card/50 flex flex-col">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Runtime Logs
+            </div>
           </CardHeader>
           <CardContent className="flex-1 p-0 overflow-hidden">
-            <ScrollArea className="h-[300px] w-full p-4 font-mono text-[10px] leading-relaxed">
+            <ScrollArea className="h-[400px] w-full p-6 font-mono text-[10px] leading-relaxed">
               {logs.map((log, i) => (
-                <div key={i} className="flex gap-2 mb-1 group">
+                <div key={i} className="flex gap-2 mb-2 group">
                   <ChevronRight className="w-3 h-3 text-primary shrink-0 opacity-50 group-hover:opacity-100" />
                   <span className="text-muted-foreground group-hover:text-foreground transition-colors">{log}</span>
                 </div>
@@ -129,13 +141,13 @@ export const NodeManager: React.FC = () => {
 };
 
 const StatCard = ({ title, value, icon: Icon, progress }: any) => (
-  <Card className="border-none bg-card/30 backdrop-blur-sm">
-    <CardContent className="p-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{title}</p>
+  <Card className="border-border bg-card/50">
+    <CardContent className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{title}</p>
         <Icon className="w-4 h-4 text-primary opacity-50" />
       </div>
-      <p className="text-2xl font-mono font-bold mb-3">{value}</p>
+      <p className="text-3xl font-mono font-bold mb-4">{value}</p>
       {progress !== undefined && (
         <div className="h-1 w-full bg-black/20 rounded-full overflow-hidden">
           <div 

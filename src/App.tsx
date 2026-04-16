@@ -5,6 +5,7 @@ import { NodeManager } from './components/NodeManager';
 import { TransactionExplorer } from './components/TransactionExplorer';
 import { Toaster } from '@/components/ui/sonner';
 import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '@/lib/utils';
 import { 
   ShieldAlert, 
   Lock, 
@@ -47,40 +48,126 @@ export default function App() {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full -z-10" />
         <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-500/5 blur-[100px] rounded-full -z-10" />
 
-        <header className="h-16 border-b border-border flex items-center justify-between px-8 bg-card/20 backdrop-blur-md z-10">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Dashboard</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-foreground font-medium capitalize">{activeTab.replace('-', ' ')}</span>
+        <header className="h-20 border-b border-border flex items-center justify-between px-8 bg-card/50 backdrop-blur-xl z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center font-black text-primary-foreground text-xl">
+              V
+            </div>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight">
+                VAULT_ZERO <span className="opacity-40 font-normal">SDK</span>
+              </h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">
+                  v2.4.0-alpha
+                </span>
+              </div>
+            </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
-              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-              <span className="text-[10px] font-mono font-bold text-primary uppercase tracking-widest">v0.4.2-alpha</span>
+          <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Network:</span>
+              <span className="text-foreground font-medium">Base Sepolia</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Github className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <Twitter className="w-4 h-4" />
-              </Button>
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+              <span>Connected:</span>
+              <span className="text-green-500 font-medium">True</span>
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.02 }}
               transition={{ duration: 0.2 }}
-              className="h-full"
+              className="grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-fr"
             >
-              {renderContent()}
+              {activeTab === 'circuits' ? (
+                <>
+                  <div className="md:col-span-2 md:row-span-2">
+                    <ZkCircuitEditor />
+                  </div>
+                  <div className="md:col-span-1">
+                    <Card className="h-full border-border bg-card/50">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          Proof Velocity
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-mono font-bold">2.4s</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">Average generation time</div>
+                        <div className="flex items-end gap-1 h-12 mt-4">
+                          {[30, 45, 60, 40, 80, 50].map((h, i) => (
+                            <div 
+                              key={i} 
+                              className={cn(
+                                "flex-1 rounded-t-sm transition-all",
+                                i === 4 ? "bg-primary" : "bg-primary/30"
+                              )} 
+                              style={{ height: `${h}%` }} 
+                            />
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="md:col-span-1">
+                    <Card className="h-full border-border bg-card/50">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          P2P Network
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-mono font-bold">128</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">Active Base nodes</div>
+                        <div className="mt-4 text-[10px] opacity-50">Last sync: 20ms ago</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="md:col-span-1">
+                    <Card className="h-full border-border bg-card/50">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          ZK Compression
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-mono font-bold">92%</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">Gas cost reduction</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="md:col-span-1">
+                    <Card className="h-full border-border bg-card/50">
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          Prover Load
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-3xl font-mono font-bold">14%</div>
+                        <div className="text-[10px] text-muted-foreground mt-1">Local CPU utilization</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              ) : (
+                <div className="md:col-span-4">
+                  {renderContent()}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

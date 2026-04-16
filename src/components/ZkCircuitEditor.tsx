@@ -54,54 +54,63 @@ export const ZkCircuitEditor: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full overflow-hidden">
-      <Card className="flex flex-col border-none bg-card/30 backdrop-blur-sm">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full overflow-hidden">
+      <Card className="flex flex-col border-border bg-card/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div>
-            <CardTitle className="text-xl font-bold">Circuit Playground</CardTitle>
-            <CardDescription>Write and compile Circom circuits</CardDescription>
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            Quick Start: Initialize ZK Node
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setCode(DEFAULT_CIRCUIT)}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Reset
+            <Button variant="ghost" size="sm" onClick={() => setCode(DEFAULT_CIRCUIT)} className="h-8 text-[10px] uppercase tracking-widest">
+              <RefreshCw className="w-3 h-3 mr-2" /> Reset
             </Button>
-            <Button size="sm" onClick={handleCompile} disabled={isCompiling}>
-              {isCompiling ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
+            <Button size="sm" onClick={handleCompile} disabled={isCompiling} className="h-8 text-[10px] uppercase tracking-widest bg-primary text-primary-foreground">
+              {isCompiling ? <RefreshCw className="w-3 h-3 mr-2 animate-spin" /> : <Play className="w-3 h-3 mr-2" />}
               Compile
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 p-0">
-          <Textarea 
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="h-full min-h-[500px] font-mono text-sm bg-black/20 border-none resize-none focus-visible:ring-0 p-6"
-            placeholder="Enter your circuit code here..."
-          />
+        <CardContent className="flex-1 p-6 flex flex-col gap-4">
+          <div className="flex-1 rounded-xl bg-[#050608] border border-white/5 p-6 font-mono text-sm overflow-hidden relative group">
+            <Textarea 
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="h-full w-full bg-transparent border-none resize-none focus-visible:ring-0 p-0 text-[#C0C5CE] leading-relaxed"
+              placeholder="Enter your circuit code here..."
+            />
+            {/* Syntax highlighting simulation overlay could go here, but keeping it simple as requested */}
+          </div>
+          <Button variant="secondary" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-widest text-xs py-6 rounded-xl">
+            View Documentation
+          </Button>
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-6 overflow-hidden">
-        <Card className="border-none bg-card/30 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-lg">Compilation Output</CardTitle>
+      <div className="flex flex-col gap-4 overflow-hidden">
+        <Card className="border-border bg-card/50">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Compilation Output
+            </div>
           </CardHeader>
           <CardContent>
             {compilationResult ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3 bg-black/20 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Constraints</p>
-                    <p className="text-xl font-mono font-bold text-primary">{compilationResult.constraints}</p>
+                  <div className="p-4 bg-black/20 rounded-xl border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Constraints</p>
+                    <p className="text-2xl font-mono font-bold text-primary">{compilationResult.constraints}</p>
                   </div>
-                  <div className="p-3 bg-black/20 rounded-lg border border-border">
-                    <p className="text-xs text-muted-foreground uppercase mb-1">Status</p>
-                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                  <div className="p-4 bg-black/20 rounded-xl border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Status</p>
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 uppercase text-[10px] tracking-widest">
                       <CheckCircle2 className="w-3 h-3 mr-1" /> Ready
                     </Badge>
                   </div>
                 </div>
-                <Button className="w-full" variant="secondary" onClick={handleGenerateProof} disabled={isGenerating}>
+                <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 py-6 rounded-xl font-bold uppercase tracking-widest text-xs" onClick={handleGenerateProof} disabled={isGenerating}>
                   {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Layers className="w-4 h-4 mr-2" />}
                   Generate Proof
                 </Button>
@@ -109,35 +118,40 @@ export const ZkCircuitEditor: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <AlertCircle className="w-8 h-8 mb-2 opacity-20" />
-                <p className="text-sm">Compile a circuit to see output</p>
+                <p className="text-xs uppercase tracking-widest">Compile a circuit to see output</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="flex-1 border-none bg-card/30 backdrop-blur-sm overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-lg">Proof Explorer</CardTitle>
+        <Card className="flex-1 border-border bg-card/50 overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              Proof Explorer
+            </div>
           </CardHeader>
           <CardContent className="h-full">
-            <ScrollArea className="h-[300px] w-full rounded-md border border-border bg-black/20 p-4">
+            <ScrollArea className="h-[250px] w-full rounded-xl border border-border bg-black/20 p-6">
               {proof ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase mb-2">Proof Data (Base64)</p>
-                    <code className="text-xs break-all text-primary/80">{proof.proof}</code>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Proof Data (Base64)</p>
+                    <div className="p-4 bg-black/40 rounded-lg border border-white/5">
+                      <code className="text-[10px] break-all text-primary/80 leading-relaxed">{proof.proof}</code>
+                    </div>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground uppercase mb-2">Public Signals</p>
-                    <div className="flex gap-2">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-3">Public Signals</p>
+                    <div className="flex flex-wrap gap-2">
                       {proof.publicSignals.map((s, i) => (
-                        <Badge key={i} variant="secondary">{s}</Badge>
+                        <Badge key={i} variant="secondary" className="bg-primary/10 text-primary border-primary/20">{s}</Badge>
                       ))}
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground italic text-sm">
+                <div className="flex items-center justify-center h-full text-muted-foreground italic text-xs uppercase tracking-widest opacity-50">
                   No proof generated yet
                 </div>
               )}
