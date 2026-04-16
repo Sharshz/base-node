@@ -6,7 +6,8 @@ import {
   Filter, 
   ExternalLink,
   Clock,
-  Hash
+  Hash,
+  Fuel
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -15,28 +16,32 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const MOCK_TXS = [
-  { hash: '0x7a2...f4e', from: '0x123...abc', to: '0xdef...456', value: '1.24 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '2s ago' },
-  { hash: '0x3b1...d2a', from: '0x789...def', to: '0xabc...123', value: '0.05 ETH', type: 'TRANSFER', status: 'confirmed', time: '15s ago' },
-  { hash: '0x9c4...e8b', from: '0x456...789', to: '0x123...456', value: '12.50 ETH', type: 'CONTRACT_CALL', status: 'pending', time: 'Just now' },
-  { hash: '0x1d5...a3c', from: '0xabc...def', to: '0x789...012', value: '0.00 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '1m ago' },
-  { hash: '0x5e6...b4d', from: '0x012...345', to: '0x678...901', value: '4.20 ETH', type: 'TRANSFER', status: 'confirmed', time: '2m ago' },
-  { hash: '0x2f7...c5e', from: '0x345...678', to: '0x901...234', value: '0.15 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '5m ago' },
+  { hash: '0x7a2...f4e', from: '0x123...abc', to: '0xdef...456', value: '1.24 ETH', gas: '0.00042 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '2s ago' },
+  { hash: '0x3b1...d2a', from: '0x789...def', to: '0xabc...123', value: '0.05 ETH', gas: '0.00021 ETH', type: 'TRANSFER', status: 'confirmed', time: '15s ago' },
+  { hash: '0x9c4...e8b', from: '0x456...789', to: '0x123...456', value: '12.50 ETH', gas: '0.00125 ETH', type: 'CONTRACT_CALL', status: 'pending', time: 'Just now' },
+  { hash: '0x1d5...a3c', from: '0xabc...def', to: '0x789...012', value: '0.00 ETH', gas: '0.00038 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '1m ago' },
+  { hash: '0x5e6...b4d', from: '0x012...345', to: '0x678...901', value: '4.20 ETH', gas: '0.00021 ETH', type: 'TRANSFER', status: 'confirmed', time: '2m ago' },
+  { hash: '0x2f7...c5e', from: '0x345...678', to: '0x901...234', value: '0.15 ETH', gas: '0.00045 ETH', type: 'ZK_PROOF', status: 'confirmed', time: '5m ago' },
 ];
 
 export const TransactionExplorer: React.FC = () => {
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             className="pl-12 bg-card/50 border-border h-12 rounded-xl focus-visible:ring-primary" 
             placeholder="Search by Transaction Hash / Address / Block..." 
           />
         </div>
-        <Button variant="outline" className="bg-card/50 border-border h-12 px-6 rounded-xl text-[10px] uppercase tracking-widest font-bold">
-          <Filter className="w-4 h-4 mr-2" /> Filters
-        </Button>
+        <Card className="border-border bg-primary/5 flex items-center px-4 h-12 rounded-xl">
+          <Fuel className="w-4 h-4 text-primary mr-3" />
+          <div className="flex-1">
+            <p className="text-[8px] uppercase tracking-widest text-muted-foreground font-bold">Base Gas Price</p>
+            <p className="text-xs font-mono font-bold text-primary">0.001 gwei <span className="text-[10px] opacity-50 ml-1">(-98% vs L1)</span></p>
+          </div>
+        </Card>
       </div>
 
       <Card className="border-border bg-card/50">
@@ -84,8 +89,14 @@ export const TransactionExplorer: React.FC = () => {
                       <p className="text-xs font-mono text-foreground/80">{tx.to}</p>
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value</p>
-                      <p className="text-lg font-mono font-bold text-primary">{tx.value}</p>
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value & Gas Est.</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-lg font-mono font-bold text-primary">{tx.value}</p>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded border border-white/5">
+                          <Fuel className="w-2.5 h-2.5" />
+                          <span className="font-mono">{tx.gas}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
