@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -13,7 +14,12 @@ import {
   Timer,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  Box,
+  CornerDownRight,
+  ShieldCheck
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -21,7 +27,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const INITIAL_MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
+const generateMockDetails = (tx: any) => ({
+  ...tx,
+  blockNumber: Math.floor(Math.random() * 10000000),
+  nonce: Math.floor(Math.random() * 500),
+  fee: `${(Math.random() * 0.0001).toFixed(6)} ETH`,
+  maxPriorityFee: '0.001 gwei',
+  timestamp: new Date().toISOString(),
+});
+
+const INITIAL_MOCK_TXS = Array.from({ length: 25 }).map((_, i) => generateMockDetails({
   hash: `0x${Math.random().toString(16).slice(2, 8)}...${Math.random().toString(16).slice(2, 5)}`,
   from: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
   to: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
@@ -41,6 +56,7 @@ export const TransactionExplorer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isLive, setIsLive] = useState(true);
+  const [expandedTxHash, setExpandedTxHash] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLive) return;
@@ -48,7 +64,8 @@ export const TransactionExplorer: React.FC = () => {
     const socket = io();
 
     socket.on('new_transaction', (tx) => {
-      setAllTxs(prev => [tx, ...prev].slice(0, 100));
+      const enhancedTx = generateMockDetails(tx);
+      setAllTxs(prev => [enhancedTx, ...prev].slice(0, 100));
     });
 
     return () => {
@@ -74,6 +91,10 @@ export const TransactionExplorer: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, typeFilter, searchQuery]);
+
+  const toggleExpand = (hash: string) => {
+    setExpandedTxHash(expandedTxHash === hash ? null : hash);
+  };
 
   return (
     <div className="space-y-4">
@@ -104,7 +125,7 @@ export const TransactionExplorer: React.FC = () => {
               isLive ? "text-primary bg-primary/10 border border-primary/20" : "text-muted-foreground border border-transparent"
             )}
           >
-            <Zap className={cn("w-3 h-3 h-3 mr-1.5 fill-current", isLive && "animate-pulse")} />
+            <Zap className={cn("w-3 h-3 mr-1.5 fill-current", isLive && "animate-pulse")} />
             {isLive ? 'Live Feed Active' : 'Feed Paused'}
           </Button>
         </Card>
@@ -195,62 +216,133 @@ export const TransactionExplorer: React.FC = () => {
         <CardContent className="p-0">
           <ScrollArea className="h-[500px]">
             <div className="divide-y divide-border/50">
-              {paginatedTxs.map((tx, i) => (
-                <div key={i} className="p-6 hover:bg-white/5 transition-colors cursor-pointer group">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110",
-                        tx.type === 'ZK_PROOF' ? "bg-primary/10 text-primary border border-primary/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
-                      )}>
-                        {tx.type === 'ZK_PROOF' ? <Hash className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
-                          <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
-                            "uppercase text-[8px] tracking-widest px-2 py-0 h-4 min-h-0",
-                            tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse"
-                          )}>
-                            {tx.status}
-                          </Badge>
+              {paginatedTxs.map((tx, i) => {
+                const isExpanded = expandedTxHash === tx.hash;
+                return (
+                  <div key={tx.hash} className={cn(
+                    "transition-all duration-300 border-l-2 border-transparent",
+                    isExpanded ? "bg-white/5 border-primary py-0" : "hover:bg-white/5 hover:border-primary/30"
+                  )}>
+                    <div 
+                      onClick={() => toggleExpand(tx.hash)}
+                      className="p-6 cursor-pointer group flex items-start justify-between"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={cn(
+                          "w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110",
+                          tx.type === 'ZK_PROOF' ? "bg-primary/10 text-primary border border-primary/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                        )}>
+                          {tx.type === 'ZK_PROOF' ? <Hash className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                         </div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{tx.time}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">From</p>
-                      <p className="text-xs font-mono text-foreground/80">{tx.from}</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">To</p>
-                      <p className="text-xs font-mono text-foreground/80">{tx.to}</p>
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value & Gas Est.</p>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-lg font-mono font-bold text-primary">{tx.value}</p>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded border border-white/5">
-                          <Fuel className="w-2.5 h-2.5" />
-                          <span className="font-mono">{tx.gas}</span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                            <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
+                              "uppercase text-[8px] tracking-widest px-2 py-0 h-4 min-h-0",
+                              tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse"
+                            )}>
+                              {tx.status}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">{tx.time}</p>
                         </div>
                       </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden md:block">
+                          <p className="text-sm font-mono font-bold text-primary">{tx.value}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-widest uppercase">{tx.type}</p>
+                        </div>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground group-hover:text-primary" />}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center justify-between mt-6 pt-6 border-t border-border/30">
-                    <Badge variant="outline" className="text-[10px] uppercase tracking-widest border-primary/20 text-primary/70">
-                      {tx.type}
-                    </Badge>
-                    <Button variant="ghost" size="sm" className="h-8 text-[10px] uppercase tracking-widest text-muted-foreground hover:text-primary hover:bg-primary/5">
-                      View on BaseScan <ExternalLink className="w-3 h-3 ml-2" />
-                    </Button>
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-6 pb-8 pt-0 space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 rounded-2xl bg-black/20 border border-border/30 relative overflow-hidden">
+                              <div className="absolute top-0 right-0 p-3 opacity-5">
+                                <ShieldCheck className="w-24 h-24 text-primary" />
+                              </div>
+                              
+                              <div className="space-y-6">
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <ArrowDownLeft className="w-3 h-3 text-red-500" />
+                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">From Address</p>
+                                  </div>
+                                  <p className="text-xs font-mono text-foreground break-all bg-white/5 p-2 rounded border border-white/5">{tx.from}</p>
+                                </div>
+                                
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <ArrowUpRight className="w-3 h-3 text-green-500" />
+                                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">To Address</p>
+                                  </div>
+                                  <p className="text-xs font-mono text-foreground break-all bg-white/5 p-2 rounded border border-white/5">{tx.to}</p>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
+                                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Block Number</p>
+                                  <div className="flex items-center gap-2">
+                                    <Box className="w-3 h-3 text-primary/50" />
+                                    <p className="text-sm font-mono font-bold">{tx.blockNumber}</p>
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
+                                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Nonce</p>
+                                  <p className="text-sm font-mono font-bold">{tx.nonce}</p>
+                                </div>
+                                <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
+                                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Tx Fee</p>
+                                  <p className="text-sm font-mono font-bold text-primary">{tx.fee}</p>
+                                </div>
+                                <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
+                                  <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Gas Limit</p>
+                                  <p className="text-sm font-mono font-bold">21,000</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between px-2">
+                              <div className="flex items-center gap-6">
+                                <div className="flex items-center gap-2">
+                                  <CornerDownRight className="w-3 h-3 text-primary" />
+                                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Value: <span className="text-foreground ml-1">{tx.value}</span></p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Fuel className="w-3 h-3 text-primary" />
+                                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Gas Price: <span className="text-foreground ml-1">{tx.gas}</span></p>
+                                </div>
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-9 px-4 rounded-xl text-[10px] uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/10 transition-all font-bold group"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.open(`https://basescan.org/tx/${tx.hash}`, '_blank');
+                                }}
+                              >
+                                View Detailed Scan 
+                                <ExternalLink className="w-3 h-3 ml-2 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
           
