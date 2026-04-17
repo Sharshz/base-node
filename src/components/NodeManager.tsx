@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export const NodeManager: React.FC = () => {
   const [status, setStatus] = useState<'running' | 'stopped' | 'syncing'>('running');
+  const [syncProgress, setSyncProgress] = useState(99.9);
   const [logs, setLogs] = useState<string[]>([]);
   const [stats, setStats] = useState({
     cpu: 42,
@@ -29,13 +30,26 @@ export const NodeManager: React.FC = () => {
 
   const handleStartNode = () => {
     setStatus('syncing');
+    setSyncProgress(0);
     setLogs(prev => [`[${new Date().toLocaleTimeString()}] Resuming ZK sync...`, ...prev].slice(0, 50));
     
     // Simulate sync process
-    setTimeout(() => {
-      setStatus('running');
-      setLogs(prev => [`[${new Date().toLocaleTimeString()}] ZK Prover Node online. Monitoring Base Mainnet...`, ...prev].slice(0, 50));
-    }, 3000);
+    const duration = 3000;
+    const interval = 50;
+    let elapsed = 0;
+    
+    const syncTimer = setInterval(() => {
+      elapsed += interval;
+      const progress = Math.min(99.9, (elapsed / duration) * 100);
+      setSyncProgress(progress);
+      
+      if (elapsed >= duration) {
+        clearInterval(syncTimer);
+        setStatus('running');
+        setSyncProgress(99.9);
+        setLogs(prev => [`[${new Date().toLocaleTimeString()}] ZK Prover Node online. Monitoring Base Mainnet...`, ...prev].slice(0, 50));
+      }
+    }, interval);
   };
 
   const handleStopNode = () => {
@@ -87,9 +101,14 @@ export const NodeManager: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 border-border bg-card/50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              ZK Prover Node Control
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                ZK Prover Node Control
+              </div>
+              <Badge variant={status === 'running' ? 'outline' : status === 'syncing' ? 'secondary' : 'destructive'} className="text-[9px] h-4 uppercase tracking-tighter px-1.5">
+                {status}
+              </Badge>
             </div>
             <div className="flex gap-2">
               {status === 'running' || status === 'syncing' ? (
@@ -138,10 +157,16 @@ export const NodeManager: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
                   <span>Sync Progress</span>
-                  <span className="text-primary">99.9%</span>
+                  <span className="text-primary">{syncProgress.toFixed(1)}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-[99.9%] transition-all duration-500" />
+                  <div 
+                    className={cn(
+                      "h-full bg-primary transition-all duration-300",
+                      status === 'syncing' ? "animate-pulse" : ""
+                    )} 
+                    style={{ width: `${syncProgress}%` }} 
+                  />
                 </div>
               </div>
 
