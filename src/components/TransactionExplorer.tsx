@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  RefreshCw,
   ChevronDown,
   ChevronUp,
   Box,
@@ -131,74 +132,62 @@ export const TransactionExplorer: React.FC = () => {
         </Card>
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center justify-between bg-card/30 p-4 rounded-xl border border-border/50">
-        <div className="flex flex-wrap gap-6">
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Status</p>
-            <div className="flex gap-2">
-              <Button 
-                variant={statusFilter === null ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setStatusFilter(null)}
-                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
-              >
-                All
-              </Button>
-              <Button 
-                variant={statusFilter === 'confirmed' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setStatusFilter('confirmed')}
-                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
-              >
-                <CheckCircle2 className="w-3 h-3 mr-2" /> Confirmed
-              </Button>
-              <Button 
-                variant={statusFilter === 'pending' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setStatusFilter('pending')}
-                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
-              >
-                <Timer className="w-3 h-3 mr-2" /> Pending
-              </Button>
+      <div className="flex flex-wrap gap-4 items-center justify-between bg-card/30 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-3 bg-black/20 p-1 rounded-xl border border-border/40">
+            <div className="flex items-center gap-2 px-3 py-1.5 border-r border-border/40">
+              <Filter className="w-3.5 h-3.5 text-primary" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-black">Filters</span>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Type</p>
-            <div className="flex gap-2">
-              <Button 
-                variant={typeFilter === null ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setTypeFilter(null)}
-                className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
+            
+            <div className="flex gap-1.5 px-2">
+              <select 
+                value={statusFilter || ''} 
+                onChange={(e) => setStatusFilter(e.target.value || null)}
+                className="bg-transparent text-[10px] uppercase tracking-widest font-bold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors py-1"
               >
-                All
-              </Button>
-              {['ZK_PROOF', 'TRANSFER', 'CONTRACT_CALL'].map(type => (
-                <Button 
-                  key={type}
-                  variant={typeFilter === type ? 'default' : 'outline'} 
-                  size="sm" 
-                  onClick={() => setTypeFilter(type)}
-                  className="h-8 text-[10px] uppercase tracking-widest rounded-lg"
-                >
-                  {type.replace('_', ' ')}
-                </Button>
-              ))}
+                <option value="" className="bg-card text-foreground">Status: All</option>
+                <option value="confirmed" className="bg-card text-foreground">Status: Confirmed</option>
+                <option value="pending" className="bg-card text-foreground">Status: Pending</option>
+              </select>
+
+              <div className="w-[1px] h-4 bg-border/40 self-center" />
+
+              <select 
+                value={typeFilter || ''} 
+                onChange={(e) => setTypeFilter(e.target.value || null)}
+                className="bg-transparent text-[10px] uppercase tracking-widest font-bold text-foreground focus:outline-none cursor-pointer hover:text-primary transition-colors py-1 pl-1"
+              >
+                <option value="" className="bg-card text-foreground">Type: All</option>
+                <option value="ZK_PROOF" className="bg-card text-foreground">Type: ZK Proof</option>
+                <option value="TRANSFER" className="bg-card text-foreground">Type: Transfer</option>
+                <option value="CONTRACT_CALL" className="bg-card text-foreground">Type: Contract Call</option>
+              </select>
             </div>
           </div>
         </div>
         
-        {(statusFilter || typeFilter || searchQuery) && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => { setStatusFilter(null); setTypeFilter(null); setSearchQuery(''); }}
-            className="h-8 text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
-          >
-            Clear Filters
-          </Button>
-        )}
+        <div className="flex items-center gap-4">
+          <AnimatePresence>
+            {(statusFilter || typeFilter || searchQuery) && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => { setStatusFilter(null); setTypeFilter(null); setSearchQuery(''); }}
+                  className="h-9 px-4 text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10 rounded-xl font-bold border border-primary/20"
+                >
+                  <RefreshCw className="w-3 h-3 mr-2" />
+                  Reset View
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <Card className="border-border bg-card/50">
