@@ -80,7 +80,7 @@ export const TransactionExplorer: React.FC = () => {
       if (hashesToFetch.length > 0) {
         fetchBatchDetails(hashesToFetch);
       }
-    }, 150); // Small delay to collect requests
+    }, 100); // Small delay to collect requests
   };
 
   useEffect(() => {
@@ -111,17 +111,15 @@ export const TransactionExplorer: React.FC = () => {
   const totalPages = Math.ceil(filteredTxs.length / PAGE_SIZE);
   const paginatedTxs = filteredTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  // Batch fetch details for visible transactions
-  useEffect(() => {
-    paginatedTxs.forEach(tx => enqueueRequest(tx.hash));
-  }, [paginatedTxs.map(t => t.hash).join(',')]);
-
   // Reset to page 1 when filters or search change
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, typeFilter, searchQuery]);
 
   const toggleExpand = (hash: string) => {
+    if (expandedTxHash !== hash) {
+      enqueueRequest(hash);
+    }
     setExpandedTxHash(expandedTxHash === hash ? null : hash);
   };
 
