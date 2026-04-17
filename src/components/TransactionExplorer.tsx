@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { 
   ArrowUpRight, 
   ArrowDownLeft, 
@@ -11,7 +12,8 @@ import {
   CheckCircle2,
   Timer,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Zap
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
+const INITIAL_MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
   hash: `0x${Math.random().toString(16).slice(2, 8)}...${Math.random().toString(16).slice(2, 5)}`,
   from: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
   to: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
@@ -33,12 +35,28 @@ const MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
 const PAGE_SIZE = 10;
 
 export const TransactionExplorer: React.FC = () => {
+  const [allTxs, setAllTxs] = useState(INITIAL_MOCK_TXS);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLive, setIsLive] = useState(true);
 
-  const filteredTxs = MOCK_TXS.filter(tx => {
+  useEffect(() => {
+    if (!isLive) return;
+
+    const socket = io();
+
+    socket.on('new_transaction', (tx) => {
+      setAllTxs(prev => [tx, ...prev].slice(0, 100));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isLive]);
+
+  const filteredTxs = allTxs.filter(tx => {
     const matchesStatus = statusFilter ? tx.status === statusFilter : true;
     const matchesType = typeFilter ? tx.type === typeFilter : true;
     const matchesSearch = searchQuery 
@@ -53,7 +71,7 @@ export const TransactionExplorer: React.FC = () => {
   const paginatedTxs = filteredTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   // Reset to page 1 when filters or search change
-  React.useEffect(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter, typeFilter, searchQuery]);
 
@@ -69,12 +87,26 @@ export const TransactionExplorer: React.FC = () => {
             placeholder="Search by Transaction Hash / Address / Block..." 
           />
         </div>
-        <Card className="border-border bg-primary/5 flex items-center px-4 h-12 rounded-xl">
-          <Fuel className="w-4 h-4 text-primary mr-3" />
-          <div className="flex-1">
-            <p className="text-[8px] uppercase tracking-widest text-muted-foreground font-bold">Base Gas Price</p>
-            <p className="text-xs font-mono font-bold text-primary">0.001 gwei <span className="text-[10px] opacity-50 ml-1">(-98% vs L1)</span></p>
+        <Card className="border-border bg-primary/5 flex items-center justify-between px-4 h-12 rounded-xl">
+          <div className="flex items-center">
+            <Fuel className="w-4 h-4 text-primary mr-3" />
+            <div>
+              <p className="text-[8px] uppercase tracking-widest text-muted-foreground font-bold">Base Gas Price</p>
+              <p className="text-xs font-mono font-bold text-primary">0.001 gwei <span className="text-[10px] opacity-50 ml-1">(-98% vs L1)</span></p>
+            </div>
           </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setIsLive(!isLive)}
+            className={cn(
+              "h-8 px-2 rounded-lg text-[8px] uppercase tracking-tighter font-black transition-all",
+              isLive ? "text-primary bg-primary/10 border border-primary/20" : "text-muted-foreground border border-transparent"
+            )}
+          >
+            <Zap className={cn("w-3 h-3 h-3 mr-1.5 fill-current", isLive && "animate-pulse")} />
+            {isLive ? 'Live Feed Active' : 'Feed Paused'}
+          </Button>
         </Card>
       </div>
 
