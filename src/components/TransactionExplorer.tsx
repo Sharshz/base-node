@@ -35,21 +35,27 @@ const PAGE_SIZE = 10;
 export const TransactionExplorer: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredTxs = MOCK_TXS.filter(tx => {
     const matchesStatus = statusFilter ? tx.status === statusFilter : true;
     const matchesType = typeFilter ? tx.type === typeFilter : true;
-    return matchesStatus && matchesType;
+    const matchesSearch = searchQuery 
+      ? tx.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        tx.to.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesStatus && matchesType && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredTxs.length / PAGE_SIZE);
   const paginatedTxs = filteredTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 when filters or search change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, searchQuery]);
 
   return (
     <div className="space-y-4">
@@ -57,6 +63,8 @@ export const TransactionExplorer: React.FC = () => {
         <div className="md:col-span-2 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-12 bg-card/50 border-border h-12 rounded-xl focus-visible:ring-primary" 
             placeholder="Search by Transaction Hash / Address / Block..." 
           />
@@ -128,11 +136,11 @@ export const TransactionExplorer: React.FC = () => {
           </div>
         </div>
         
-        {(statusFilter || typeFilter) && (
+        {(statusFilter || typeFilter || searchQuery) && (
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => { setStatusFilter(null); setTypeFilter(null); }}
+            onClick={() => { setStatusFilter(null); setTypeFilter(null); setSearchQuery(''); }}
             className="h-8 text-[10px] uppercase tracking-widest text-primary hover:bg-primary/10"
           >
             Clear Filters
