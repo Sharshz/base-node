@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { compileCircuit, generateProof, ZKProof } from '../lib/zk-mock';
+import { compileCircuit, generateProof, verifyProof, ZKProof } from '../lib/zk-mock';
 import { toast } from 'sonner';
 
 // Helper for conditional classes
@@ -43,8 +43,10 @@ export const ZkCircuitEditor: React.FC = () => {
   const [code, setCode] = useState(DEFAULT_CIRCUIT);
   const [isCompiling, setIsCompiling] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [compilationResult, setCompilationResult] = useState<any>(null);
   const [proof, setProof] = useState<ZKProof | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [inputs, setInputs] = useState({ a: '3', b: '11' });
 
@@ -56,6 +58,7 @@ export const ZkCircuitEditor: React.FC = () => {
     setIsCompiling(true);
     setCompilationResult(null);
     setProof(null);
+    setIsVerified(null);
     setShowDetails(false);
     try {
       const result = await compileCircuit(code);
@@ -72,6 +75,7 @@ export const ZkCircuitEditor: React.FC = () => {
   const handleGenerateProof = async () => {
     setIsGenerating(true);
     setProof(null);
+    setIsVerified(null);
     try {
       // Parse inputs to numbers for the mock logic
       const numericInputs = {
@@ -85,6 +89,25 @@ export const ZkCircuitEditor: React.FC = () => {
       toast.error("Failed to generate proof");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!proof) return;
+    setIsVerifying(true);
+    setIsVerified(null);
+    try {
+      const result = await verifyProof(proof);
+      setIsVerified(result);
+      if (result) {
+        toast.success("Proof verified successfully!");
+      } else {
+        toast.error("Proof verification failed.");
+      }
+    } catch (error: any) {
+      toast.error("Error during verification");
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -280,12 +303,44 @@ export const ZkCircuitEditor: React.FC = () => {
 
         <Card className="flex-1 border-border bg-card/50 overflow-hidden">
           <CardHeader className="pb-2">
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              Proof Explorer
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                Proof Explorer
+              </div>
+              <AnimatePresence>
+                {isVerified !== null && (
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                  >
+                    <Badge 
+                      className={cn(
+                        "uppercase text-[10px] tracking-widest px-3 py-1",
+                        isVerified 
+                          ? "bg-green-500/10 text-green-500 border-green-500/20" 
+                          : "bg-red-500/10 text-red-500 border-red-500/20"
+                      )}
+                    >
+                      {isVerified ? (
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Verified
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Invalid
+                        </span>
+                      )}
+                    </Badge>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </CardHeader>
-          <CardContent className="h-full">
+          <CardContent className="h-full space-y-4">
             <ScrollArea className="h-[250px] w-full rounded-xl border border-border bg-black/20 p-6">
               {proof ? (
                 <div className="space-y-6">
@@ -310,6 +365,29 @@ export const ZkCircuitEditor: React.FC = () => {
                 </div>
               )}
             </ScrollArea>
+            
+            <AnimatePresence>
+              {proof && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <Button 
+                    className="w-full bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 py-6 rounded-xl font-bold uppercase tracking-widest text-xs group"
+                    onClick={handleVerify}
+                    disabled={isVerifying}
+                  >
+                    {isVerifying ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <ShieldCheck className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                    )}
+                    {isVerifying ? "Verifying..." : "Verify Proof on Base"}
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
       </div>
