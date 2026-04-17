@@ -40,3 +40,15 @@ export const verifyProof = async (proof: ZKProof): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
   return true;
 };
+
+export const deployCircuit = async (params: { name: string; abi: string; bytecode: string }) => {
+  // Simulate deployment delay
+  await new Promise((resolve) => setTimeout(resolve, 2500));
+  
+  return {
+    address: `0x${Math.random().toString(16).substr(2, 40)}`,
+    status: 'success',
+    deployedAt: Date.now(),
+    transactionHash: `0x${Math.random().toString(16).substr(2, 64)}`
+  };
+};
