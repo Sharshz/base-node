@@ -1,5 +1,20 @@
-import React, { useState } from 'react';
-import { Play, Save, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Play, 
+  Save, 
+  RefreshCw, 
+  CheckCircle2, 
+  AlertCircle, 
+  ShieldCheck, 
+  Clock, 
+  Cpu, 
+  Activity,
+  Zap,
+  ChevronDown,
+  ChevronUp,
+  Terminal
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -7,6 +22,9 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { compileCircuit, generateProof, ZKProof } from '../lib/zk-mock';
 import { toast } from 'sonner';
+
+// Helper for conditional classes
+const cn = (...inputs: any[]) => inputs.filter(Boolean).join(' ');
 
 const DEFAULT_CIRCUIT = `pragma circom 2.0.0;
 
@@ -26,12 +44,17 @@ export const ZkCircuitEditor: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [compilationResult, setCompilationResult] = useState<any>(null);
   const [proof, setProof] = useState<ZKProof | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleCompile = async () => {
     setIsCompiling(true);
+    setCompilationResult(null);
+    setProof(null);
+    setShowDetails(false);
     try {
       const result = await compileCircuit(code);
       setCompilationResult(result);
+      setShowDetails(true);
       toast.success("Circuit compiled successfully");
     } catch (error: any) {
       toast.error(error.message);
@@ -62,7 +85,7 @@ export const ZkCircuitEditor: React.FC = () => {
             Quick Start: Initialize ZK Node
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setCode(DEFAULT_CIRCUIT)} className="h-8 text-[10px] uppercase tracking-widest">
+            <Button variant="ghost" size="sm" onClick={() => { setCode(DEFAULT_CIRCUIT); setCompilationResult(null); setProof(null); }} className="h-8 text-[10px] uppercase tracking-widest">
               <RefreshCw className="w-3 h-3 mr-2" /> Reset
             </Button>
             <Button size="sm" onClick={handleCompile} disabled={isCompiling} className="h-8 text-[10px] uppercase tracking-widest bg-primary text-primary-foreground">
@@ -79,7 +102,6 @@ export const ZkCircuitEditor: React.FC = () => {
               className="h-full w-full bg-transparent border-none resize-none focus-visible:ring-0 p-0 text-[#C0C5CE] leading-relaxed"
               placeholder="Enter your circuit code here..."
             />
-            {/* Syntax highlighting simulation overlay could go here, but keeping it simple as requested */}
           </div>
           <Button variant="secondary" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-widest text-xs py-6 rounded-xl">
             View Documentation
@@ -110,7 +132,64 @@ export const ZkCircuitEditor: React.FC = () => {
                     </Badge>
                   </div>
                 </div>
-                <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 py-6 rounded-xl font-bold uppercase tracking-widest text-xs" onClick={handleGenerateProof} disabled={isGenerating}>
+
+                <AnimatePresence>
+                  {showDetails && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4 mt-2 bg-black/40 rounded-xl border border-primary/20 space-y-4 relative overflow-hidden">
+                        <div className="absolute -top-4 -right-4 opacity-5 pointer-events-none">
+                          <Activity className="w-24 h-24 text-primary" />
+                        </div>
+                        
+                        <div className="flex items-center gap-2 border-b border-border pb-3">
+                          <ShieldCheck className="w-4 h-4 text-primary" />
+                          <h4 className="text-[10px] uppercase tracking-widest font-black text-foreground">Compilation Report</h4>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-3 h-3 text-primary/50" />
+                              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Circuit ID</p>
+                            </div>
+                            <p className="text-xs font-mono text-foreground/80 break-all">{compilationResult.circuitId}</p>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-3 h-3 text-primary/50" />
+                              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Compiled At</p>
+                            </div>
+                            <p className="text-xs font-mono text-foreground/80">{new Date(compilationResult.compiledAt).toLocaleTimeString()}</p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <Cpu className="w-3 h-3 text-primary/50" />
+                              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Backend</p>
+                            </div>
+                            <p className="text-xs font-mono text-foreground/80">Groth16 / WASM</p>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                              <Terminal className="w-3 h-3 text-primary/50" />
+                              <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Optimization</p>
+                            </div>
+                            <p className="text-xs font-mono text-foreground/80">Level 2</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 py-6 rounded-xl font-bold uppercase tracking-widest text-xs mt-2" onClick={handleGenerateProof} disabled={isGenerating}>
                   {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Layers className="w-4 h-4 mr-2" />}
                   Generate Proof
                 </Button>
