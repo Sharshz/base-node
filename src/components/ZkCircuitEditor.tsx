@@ -16,6 +16,7 @@ import {
   Terminal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,11 @@ export const ZkCircuitEditor: React.FC = () => {
   const [compilationResult, setCompilationResult] = useState<any>(null);
   const [proof, setProof] = useState<ZKProof | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [inputs, setInputs] = useState({ a: '3', b: '11' });
+
+  const handleInputChange = (key: string, value: string) => {
+    setInputs(prev => ({ ...prev, [key]: value }));
+  };
 
   const handleCompile = async () => {
     setIsCompiling(true);
@@ -65,8 +71,14 @@ export const ZkCircuitEditor: React.FC = () => {
 
   const handleGenerateProof = async () => {
     setIsGenerating(true);
+    setProof(null);
     try {
-      const result = await generateProof({ a: 3, b: 11 });
+      // Parse inputs to numbers for the mock logic
+      const numericInputs = {
+        a: parseInt(inputs.a) || 0,
+        b: parseInt(inputs.b) || 0
+      };
+      const result = await generateProof(numericInputs);
       setProof(result);
       toast.success("Proof generated successfully");
     } catch (error: any) {
@@ -189,10 +201,73 @@ export const ZkCircuitEditor: React.FC = () => {
                   )}
                 </AnimatePresence>
 
-                <Button className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 py-6 rounded-xl font-bold uppercase tracking-widest text-xs mt-2" onClick={handleGenerateProof} disabled={isGenerating}>
-                  {isGenerating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Layers className="w-4 h-4 mr-2" />}
-                  Generate Proof
-                </Button>
+                <div className="p-4 bg-black/20 rounded-xl border border-border space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Circuit Parameters</p>
+                    <Badge variant="outline" className="text-[9px] uppercase tracking-tighter opacity-50">Multiplier Template</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase tracking-widest text-muted-foreground ml-1">Input A</label>
+                      <Input 
+                        type="number" 
+                        value={inputs.a}
+                        onChange={(e) => handleInputChange('a', e.target.value)}
+                        className="bg-black/40 border-border h-9 text-xs font-mono focus-visible:ring-primary"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] uppercase tracking-widest text-muted-foreground ml-1">Input B</label>
+                      <Input 
+                        type="number" 
+                        value={inputs.b}
+                        onChange={(e) => handleInputChange('b', e.target.value)}
+                        className="bg-black/40 border-border h-9 text-xs font-mono focus-visible:ring-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <Button 
+                    className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80 py-6 rounded-xl font-bold uppercase tracking-widest text-xs mt-2 overflow-hidden group" 
+                    onClick={handleGenerateProof} 
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Generating Proof...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        Generate Proof
+                      </span>
+                    )}
+                  </Button>
+                  
+                  {isGenerating && (
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 3, ease: 'linear' }}
+                      className="absolute bottom-[-2px] left-0 h-0.5 bg-primary/50 rounded-full"
+                    />
+                  )}
+                </div>
+
+                {isGenerating && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-center"
+                  >
+                    <p className="text-[10px] uppercase tracking-widest text-primary font-bold animate-pulse">
+                      Computing Witnesses & Generating SNARK Proof...
+                    </p>
+                  </motion.div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
