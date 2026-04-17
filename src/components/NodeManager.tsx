@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Server, 
   Cpu, 
@@ -26,23 +27,53 @@ export const NodeManager: React.FC = () => {
     blockHeight: 14205932
   });
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (status === 'running' || status === 'syncing') {
-        setStats(prev => ({
-          ...prev,
-          cpu: Math.min(100, Math.max(0, prev.cpu + (Math.random() * 10 - 5))),
-          ram: Math.min(100, Math.max(0, prev.ram + (Math.random() * 2 - 1))),
-          blockHeight: prev.blockHeight + (Math.random() > 0.8 ? 1 : 0)
-        }));
+  const handleStartNode = () => {
+    setStatus('syncing');
+    setLogs(prev => [`[${new Date().toLocaleTimeString()}] Resuming ZK sync...`, ...prev].slice(0, 50));
+    
+    // Simulate sync process
+    setTimeout(() => {
+      setStatus('running');
+      setLogs(prev => [`[${new Date().toLocaleTimeString()}] ZK Prover Node online. Monitoring Base Mainnet...`, ...prev].slice(0, 50));
+    }, 3000);
+  };
 
-        const newLog = `[${new Date().toLocaleTimeString()}] Block ${stats.blockHeight} verified. Peers: ${stats.peers}`;
-        setLogs(prev => [newLog, ...prev].slice(0, 50));
-      }
-    }, 2000);
+  const handleStopNode = () => {
+    setStatus('stopped');
+    setLogs(prev => [`[${new Date().toLocaleTimeString()}] Graceful shutdown initiated.`, ...prev].slice(0, 50));
+    setTimeout(() => {
+      setLogs(prev => [`[${new Date().toLocaleTimeString()}] ZK Prover Node offline.`, ...prev].slice(0, 50));
+    }, 1000);
+  };
+
+  useEffect(() => {
+    if (status !== 'running' && status !== 'syncing') return;
+
+    const interval = setInterval(() => {
+      setStats(prev => {
+        const nextCpu = Math.min(100, Math.max(5, prev.cpu + (Math.random() * 16 - 8)));
+        const nextRam = Math.min(100, Math.max(10, prev.ram + (Math.random() * 4 - 2)));
+        const nextDisk = Math.min(100, Math.max(0, prev.disk + (Math.random() * 0.1 - 0.02))); // Disk grows slowly
+        const nextBlock = prev.blockHeight + (Math.random() > 0.7 ? 1 : 0);
+        
+        // Only add log if block height changed
+        if (nextBlock > prev.blockHeight) {
+          const newLog = `[${new Date().toLocaleTimeString()}] Block ${nextBlock} verified. Peers: ${prev.peers} (Syncing ZK-Proof...)`;
+          setLogs(logsPrev => [newLog, ...logsPrev].slice(0, 50));
+        }
+
+        return {
+          ...prev,
+          cpu: nextCpu,
+          ram: nextRam,
+          disk: nextDisk,
+          blockHeight: nextBlock
+        };
+      });
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [status, stats.blockHeight, stats.peers]);
+  }, [status]);
 
   return (
     <div className="space-y-4">
@@ -58,15 +89,15 @@ export const NodeManager: React.FC = () => {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted-foreground">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              Node Control
+              ZK Prover Node Control
             </div>
             <div className="flex gap-2">
-              {status === 'running' ? (
-                <Button variant="destructive" size="sm" onClick={() => setStatus('stopped')} className="h-8 text-[10px] uppercase tracking-widest">
+              {status === 'running' || status === 'syncing' ? (
+                <Button variant="destructive" size="sm" onClick={handleStopNode} className="h-8 text-[10px] uppercase tracking-widest" disabled={status === 'stopped'}>
                   <Square className="w-3 h-3 mr-2" /> Stop Node
                 </Button>
               ) : (
-                <Button variant="default" size="sm" onClick={() => setStatus('running')} className="h-8 text-[10px] uppercase tracking-widest bg-green-600 hover:bg-green-700">
+                <Button variant="default" size="sm" onClick={handleStartNode} className="h-8 text-[10px] uppercase tracking-widest bg-green-600 hover:bg-green-700">
                   <Play className="w-3 h-3 mr-2" /> Start Node
                 </Button>
               )}
@@ -74,15 +105,28 @@ export const NodeManager: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-6 bg-black/20 rounded-xl border border-border">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center justify-between p-6 bg-black/20 rounded-xl border border-border overflow-hidden relative">
+                {status === 'syncing' && (
+                  <motion.div 
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    className="absolute inset-0 bg-primary/5 opacity-50 skew-x-12"
+                  />
+                )}
+                <div className="flex items-center gap-4 relative z-10">
                   <div className={cn(
-                    "w-2 h-2 rounded-full animate-pulse",
-                    status === 'running' ? "bg-green-500" : status === 'syncing' ? "bg-yellow-500" : "bg-red-500"
+                    "w-2 h-2 rounded-full",
+                    status === 'running' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" : 
+                    status === 'syncing' ? "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)] animate-bounce" : 
+                    "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
                   )} />
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-widest capitalize">{status}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">Base Mainnet (Optimism Stack)</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold uppercase tracking-widest">{status}</p>
+                      {status === 'syncing' && <RefreshCw className="w-3 h-3 animate-spin text-yellow-500" />}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-tighter">Base ZK-Sequencer v2.1.0 (Live)</p>
                   </div>
                 </div>
                 <div className="text-right">
