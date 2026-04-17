@@ -20,7 +20,8 @@ import {
   ChevronUp,
   Box,
   CornerDownRight,
-  ShieldCheck
+  ShieldCheck,
+  Code2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -247,13 +248,22 @@ export const TransactionExplorer: React.FC = () => {
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110",
-                          tx.type === 'ZK_PROOF' ? "bg-primary/10 text-primary border border-primary/20" : "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+                          tx.type === 'ZK_PROOF' ? "bg-primary/10 text-primary border border-primary/20" : 
+                          tx.type === 'CONTRACT_CALL' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                          "bg-blue-500/10 text-blue-500 border border-blue-500/20"
                         )}>
-                          {tx.type === 'ZK_PROOF' ? <Hash className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                          {tx.type === 'ZK_PROOF' ? <ShieldCheck className="w-5 h-5" /> : 
+                           tx.type === 'CONTRACT_CALL' ? <Code2 className="w-5 h-5" /> : 
+                           <ArrowUpRight className="w-5 h-5" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                            <div className="flex items-center gap-1.5">
+                              {tx.type === 'ZK_PROOF' && <ShieldCheck className="w-3 h-3 text-primary/60" />}
+                              {tx.type === 'CONTRACT_CALL' && <Code2 className="w-3 h-3 text-amber-500/60" />}
+                              {tx.type === 'TRANSFER' && <ArrowUpRight className="w-3 h-3 text-blue-500/60" />}
+                              <p className="font-mono text-xs font-bold group-hover:text-primary transition-colors">{tx.hash}</p>
+                            </div>
                             <Badge variant={tx.status === 'confirmed' ? 'default' : 'secondary'} className={cn(
                               "uppercase text-[8px] tracking-widest px-2 py-0 h-4 min-h-0",
                               tx.status === 'confirmed' ? "bg-green-500/10 text-green-500 border-green-500/20" : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse"
