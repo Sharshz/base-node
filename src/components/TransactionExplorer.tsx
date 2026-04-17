@@ -28,16 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const generateMockDetails = (tx: any) => ({
-  ...tx,
-  blockNumber: Math.floor(Math.random() * 10000000),
-  nonce: Math.floor(Math.random() * 500),
-  fee: `${(Math.random() * 0.0001).toFixed(6)} ETH`,
-  maxPriorityFee: '0.001 gwei',
-  timestamp: new Date().toISOString(),
-});
-
-const INITIAL_MOCK_TXS = Array.from({ length: 25 }).map((_, i) => generateMockDetails({
+const INITIAL_MOCK_TXS = Array.from({ length: 25 }).map((_, i) => ({
   hash: `0x${Math.random().toString(16).slice(2, 8)}...${Math.random().toString(16).slice(2, 5)}`,
   from: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
   to: `0x${Math.random().toString(16).slice(2, 6)}...${Math.random().toString(16).slice(2, 6)}`,
@@ -58,6 +49,39 @@ export const TransactionExplorer: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLive, setIsLive] = useState(true);
   const [expandedTxHash, setExpandedTxHash] = useState<string | null>(null);
+  const [detailsCache, setDetailsCache] = useState<Record<string, any>>({});
+  const requestQueue = React.useRef<Set<string>>(new Set());
+  const batchTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+  const fetchBatchDetails = async (hashes: string[]) => {
+    try {
+      const response = await fetch('/api/transactions/details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hashes }),
+      });
+      const data = await response.json();
+      setDetailsCache(prev => ({ ...prev, ...data }));
+    } catch (error) {
+      console.error('Failed to fetch transaction details:', error);
+    }
+  };
+
+  const enqueueRequest = (hash: string) => {
+    if (detailsCache[hash] || requestQueue.current.has(hash)) return;
+    
+    requestQueue.current.add(hash);
+    
+    if (batchTimeout.current) clearTimeout(batchTimeout.current);
+    
+    batchTimeout.current = setTimeout(() => {
+      const hashesToFetch: string[] = Array.from(requestQueue.current);
+      requestQueue.current.clear();
+      if (hashesToFetch.length > 0) {
+        fetchBatchDetails(hashesToFetch);
+      }
+    }, 150); // Small delay to collect requests
+  };
 
   useEffect(() => {
     if (!isLive) return;
@@ -65,8 +89,7 @@ export const TransactionExplorer: React.FC = () => {
     const socket = io();
 
     socket.on('new_transaction', (tx) => {
-      const enhancedTx = generateMockDetails(tx);
-      setAllTxs(prev => [enhancedTx, ...prev].slice(0, 100));
+      setAllTxs(prev => [tx, ...prev].slice(0, 100));
     });
 
     return () => {
@@ -87,6 +110,11 @@ export const TransactionExplorer: React.FC = () => {
 
   const totalPages = Math.ceil(filteredTxs.length / PAGE_SIZE);
   const paginatedTxs = filteredTxs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  // Batch fetch details for visible transactions
+  useEffect(() => {
+    paginatedTxs.forEach(tx => enqueueRequest(tx.hash));
+  }, [paginatedTxs.map(t => t.hash).join(',')]);
 
   // Reset to page 1 when filters or search change
   useEffect(() => {
@@ -207,6 +235,8 @@ export const TransactionExplorer: React.FC = () => {
             <div className="divide-y divide-border/50">
               {paginatedTxs.map((tx, i) => {
                 const isExpanded = expandedTxHash === tx.hash;
+                const details = detailsCache[tx.hash];
+
                 return (
                   <div key={tx.hash} className={cn(
                     "transition-all duration-300 border-l-2 border-transparent",
@@ -283,20 +313,36 @@ export const TransactionExplorer: React.FC = () => {
                                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Block Number</p>
                                   <div className="flex items-center gap-2">
                                     <Box className="w-3 h-3 text-primary/50" />
-                                    <p className="text-sm font-mono font-bold">{tx.blockNumber}</p>
+                                    {details ? (
+                                      <p className="text-sm font-mono font-bold animate-in fade-in duration-500">{details.blockNumber}</p>
+                                    ) : (
+                                      <div className="h-4 w-20 bg-white/10 rounded animate-pulse" />
+                                    )}
                                   </div>
                                 </div>
                                 <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
                                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Nonce</p>
-                                  <p className="text-sm font-mono font-bold">{tx.nonce}</p>
+                                  {details ? (
+                                    <p className="text-sm font-mono font-bold animate-in fade-in duration-500">{details.nonce}</p>
+                                  ) : (
+                                    <div className="h-4 w-12 bg-white/10 rounded animate-pulse" />
+                                  )}
                                 </div>
                                 <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
                                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Tx Fee</p>
-                                  <p className="text-sm font-mono font-bold text-primary">{tx.fee}</p>
+                                  {details ? (
+                                    <p className="text-sm font-mono font-bold text-primary animate-in fade-in duration-500">{details.fee}</p>
+                                  ) : (
+                                    <div className="h-4 w-24 bg-white/10 rounded animate-pulse" />
+                                  )}
                                 </div>
                                 <div className="space-y-1.5 bg-white/5 p-4 rounded-xl border border-white/5">
                                   <p className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold">Gas Limit</p>
-                                  <p className="text-sm font-mono font-bold">21,000</p>
+                                  {details ? (
+                                    <p className="text-sm font-mono font-bold animate-in fade-in duration-500">{details.gasLimit}</p>
+                                  ) : (
+                                    <div className="h-4 w-16 bg-white/10 rounded animate-pulse" />
+                                  )}
                                 </div>
                               </div>
                             </div>

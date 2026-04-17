@@ -38,6 +38,29 @@ async function startServer() {
     io.emit("new_transaction", newTx);
   }, 8000);
 
+  app.use(express.json());
+
+  app.post("/api/transactions/details", (req, res) => {
+    const { hashes } = req.body;
+    if (!Array.isArray(hashes)) {
+      return res.status(400).json({ error: "Hashes must be an array" });
+    }
+
+    const details = hashes.reduce((acc: any, hash: string) => {
+      acc[hash] = {
+        blockNumber: Math.floor(Math.random() * 10000000),
+        nonce: Math.floor(Math.random() * 500),
+        fee: `${(Math.random() * 0.0001).toFixed(6)} ETH`,
+        maxPriorityFee: '0.001 gwei',
+        timestamp: new Date().toISOString(),
+        gasLimit: "21,000"
+      };
+      return acc;
+    }, {});
+
+    res.json(details);
+  });
+
   io.on("connection", (socket) => {
     console.log("Client connected");
     
